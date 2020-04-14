@@ -27,6 +27,7 @@ public class AficionController {
 
 	@PostMapping("d")
 	public String borrarPost(@RequestParam("id") Long idAficion, HttpSession s) throws DangerException {
+		//LINEA DE PRUEBA
 		H.isRolOK("admin", s);
 		String nombreAficion = "----";
 		try {

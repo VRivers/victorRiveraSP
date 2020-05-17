@@ -2,13 +2,13 @@
 	<div class="row">
 	
 		<div class="col-4" th:if="${session.persona == null}">
-			<a href="/registro">Registro</a>
+			<a href="/persona/c">Registro</a>
 			&nbsp;/&nbsp;
 			<a href="/login">Login</a>
 		</div>
 	
 		<div class="col-4" th:if="${session.persona != null}">
-			<span th:text="${session.persona.nombre}"></span>
+			<span th:text="${session.persona.loginname}"></span>
 			&nbsp;/&nbsp;
 			( <a href="/logout">Logout</a> )
 		</div>

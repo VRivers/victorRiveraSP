@@ -16,7 +16,7 @@ import javax.persistence.OneToMany;
 
 
 @Entity
-public class Pais {
+public class Categoria {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -25,21 +25,21 @@ public class Pais {
 	@Column(unique = true)
 	private String nombre;
 	
-	@OneToMany(mappedBy = "pais", cascade = CascadeType.PERSIST)
-	private Collection<Persona> personas;
+	@OneToMany(mappedBy = "categoria", cascade = CascadeType.PERSIST)
+	private Collection<Producto> productos;
 
 	
 //======================
 
-	public Pais() {
+	public Categoria() {
 		super();
-		this.personas = new ArrayList<>();
+		this.productos = new ArrayList<>();
 	}
 
 
-	public Pais(String nombre) {
+	public Categoria(String nombre) {
 		this.nombre=nombre;
-		this.personas = new ArrayList<>();
+		this.productos = new ArrayList<>();
 	
 	}
 
@@ -63,12 +63,12 @@ public class Pais {
 		this.nombre = nombre;
 	}
 	
-	public Collection<Persona> getPersonas() {
-		return personas;
+	public Collection<Producto> getProductos() {
+		return productos;
 	}
 
-	public void setPersonas(Collection<Persona> personas) {
-		this.personas = personas;
+	public void setProductos(Collection<Producto> productos) {
+		this.productos = productos;
 	}
 	
 }

@@ -1,24 +1,26 @@
 <div class="container">
-	<h1>Bienvenido a la aplicación P.A.P.</h1>
+
+
+	<div th:if="${session.persona == null}">
+	<h1>Bienvenido a la aplicación P.A.P</h1>
+	<code>Tienes que registrarte como usuario</code>
+	</div>
+	
+	<div th:if="${session.persona != null && session.persona.id == 1}">
+	<h1>Bienvenido a la aplicación P.A.P. <b>Administrador</b></h1>
 	
 	<form action="/pais/r">
-		<input type="submit" value="Países"/>
+		<input type="submit" value="Países"/><br>
 	</form>
-
-	<form action="/aficion/r">
-		<input type="submit" value="Aficiones"/>
+	
+	<form action="/categoria/r">
+		<input type="submit" value="Categoria"/><br>
 	</form>
-
-	<form action="/persona/r">
-		<input type="submit" value="Personas"/>
-	</form>
-
-	<form action="/producto/r">
-		<input type="submit" value="Productos"/>
-	</form>
-
-	<form action="/carrito/r">
-		<input type="submit" value="Carrito"/>
-	</form>
-
+	</div>
+	
+		<div th:if="${session.persona != null && session.persona.id != 1}">
+	<h1>Bienvenido a la aplicación P.A.P. <b th:text=${session.persona.loginname}/> </h1>
+	<code>Sin funcionalidades disponibles por el momento</code>
+	</div>
+	
 </div>

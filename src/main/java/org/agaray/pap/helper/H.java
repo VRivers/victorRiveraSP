@@ -26,7 +26,7 @@ public class H {
 				PRG.error("Rol inadecuado");
 			}
 		} else { // Auth o admin
-			if (!persona.getLoginname().equals("admin") && rol.equals("admin")) { // anon
+			if (!persona.getLoginname().equals("Administrador") && rol.equals("admin")) { // auth
 				PRG.error("Rol inadecuado");
 			}
 		}

@@ -11,12 +11,14 @@ import javax.servlet.http.HttpSession;
 
 import org.agaray.pap.domain.Pais;
 import org.agaray.pap.domain.Persona;
+import org.agaray.pap.domain.Venta;
 import org.agaray.pap.exception.DangerException;
 import org.agaray.pap.exception.InfoException;
 import org.agaray.pap.helper.H;
 import org.agaray.pap.helper.PRG;
 import org.agaray.pap.repository.PaisRepository;
 import org.agaray.pap.repository.PersonaRepository;
+import org.agaray.pap.repository.VentaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -38,12 +40,13 @@ public class AnonymousController {
 	@Autowired
 	PaisRepository repoPais;
 	
+	@Autowired
+	VentaRepository repoVenta;
 	
-	
-	@Value("${app.uploadFolder}")
+	@Value("${app.uploadFolderUsuario}")
 	private String UPLOADED_FOLDER;
-
-
+	
+	
 
 	@GetMapping("/init")
 	public String initGet(ModelMap m) throws DangerException {
@@ -66,7 +69,7 @@ public class AnonymousController {
 		}
 		
 		repoPersona.deleteAll();
-		repoPersona.save(new Persona("Administrador","admin",170,LocalDate.now(),null, null));
+		repoPersona.save(new Persona("Administrador","admin",null,LocalDate.now()));
 		return "redirect:/";
 	}
 	
@@ -109,40 +112,64 @@ public class AnonymousController {
 	}
 	
 
-	
-
 	@PostMapping("/persona/c")
 	public void cPersonaPost (
 		@RequestParam("loginname") String loginname,
 		@RequestParam("password") String password,
 		@RequestParam("altura") Integer altura,
 		@RequestParam("fechaNacimiento") @DateTimeFormat(iso = ISO.DATE) LocalDate fechaNacimiento,
-		@RequestParam("pais") Pais pais,
-		@RequestParam("foto") MultipartFile foto
-		)throws DangerException, InfoException 
-	{
+		@RequestParam("pais") Long idPais,
+		@RequestParam(value ="foto", required = false) MultipartFile foto
+		)throws DangerException, InfoException {
+		
 		try {
-			
 		
-		
-		//Guardado de la foto en carpeta local y extracción de formato de la imagen
-		String extFoto = null;
-		extFoto = (foto.getOriginalFilename().split("\\."))[1];
-		
+		Persona persona = new Persona (loginname,password,altura,fechaNacimiento);
 	
-		Persona persona = new Persona (loginname,password,altura,fechaNacimiento, pais, extFoto); //TODO 
-		repoPersona.save(persona);
+		//Extracción de formato de la imagen
+			String extFoto = null;
+			if (!foto.isEmpty()) {
+				extFoto = (foto.getOriginalFilename().split("\\."))[1];
+				persona.setFoto(extFoto);
+				
+			}
+			else {
+				persona.setFoto(extFoto);
+			}
 		
+		//Comprobación de pais
+			try {
+				Pais pais = repoPais.getOne(idPais);
+				pais.getPersonas().add(persona);
+				persona.setPais(pais);	
+			}
+			catch (Exception e) {
+				throw new Exception("País no especificado");
+			}
+	
+		Venta ventaencurso = new Venta (LocalDate.now());
+		ventaencurso.setPersonaencurso(persona);
+		persona.setVentaencurso(ventaencurso);
 		
-		byte[] bytes = foto.getBytes();
-	    Path path = Paths.get(UPLOADED_FOLDER + "persona-" + persona.getId() + "." + persona.getFoto());
-		Files.write(path, bytes);
-			
-			
+			try {
+				repoPersona.save(persona);
+			}
+	
+			catch (Exception e) {
+				throw new Exception("Persona ya existente");
+			}
 		
+		//Subida de la imagen del usuario en una carpeta local
+		
+		if (persona.getFoto() != null) {
+			byte[] bytes = foto.getBytes();
+		    Path path = Paths.get(UPLOADED_FOLDER + "persona-" + persona.getId() + "." + persona.getFoto());
+			Files.write(path, bytes);
+		}
+
 		}
 		catch (Exception e) {
-			PRG.error("LOGINNAME DUPLICADO");
+			PRG.error(e.getMessage());
 		}
 		PRG.info("Usuario '"+loginname+"' registrado con éxito", "/");
 		

@@ -12,4 +12,5 @@ public interface PersonaRepository extends JpaRepository<Persona, Long>{
 	public List<Persona> findAllByOrderByAlturaAsc();
 	public List<Persona> findAllByOrderByAlturaDesc();
 	public List<Persona> findAllByOrderByFnacDesc();
+	public List<Persona> findAllByOrderByLoginnameAsc();
 }

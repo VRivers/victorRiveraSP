@@ -1,9 +1,16 @@
 package org.agaray.pap.controller;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+
 import javax.servlet.http.HttpSession;
 
 import org.agaray.pap.domain.Categoria;
 import org.agaray.pap.domain.Pais;
+import org.agaray.pap.domain.Persona;
+import org.agaray.pap.domain.Producto;
 import org.agaray.pap.exception.DangerException;
 import org.agaray.pap.exception.InfoException;
 import org.agaray.pap.helper.H;
@@ -11,25 +18,115 @@ import org.agaray.pap.helper.PRG;
 import org.agaray.pap.repository.CategoriaRepository;
 import org.agaray.pap.repository.PaisRepository;
 import org.agaray.pap.repository.PersonaRepository;
+import org.agaray.pap.repository.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 @Controller
 public class AdminController {
 	
-	@Autowired 
+	@Autowired
 	private PersonaRepository personaRepository;
-	
-	@Autowired 
+
+	@Autowired
 	private PaisRepository paisRepository;
-	
-	@Autowired 
+
+	@Autowired
 	private CategoriaRepository categoriaRepository;
+
+	@Autowired
+	private ProductoRepository productoRepository;
 	
+	@Value("${app.uploadFolderProducto}")
+	private String UPLOADED_FOLDER;
+	
+	
+// ===================================== OPERACIONES DE "PERSONA" ==================================================
+
+	
+	@GetMapping("/persona/r")
+	public String rPersonaGet(ModelMap m, HttpSession s) throws DangerException {
+		H.isRolOK("admin", s);
+		m.put("personas", personaRepository.findAllByOrderByLoginnameAsc());
+		m.put("view", "/persona/r");
+		return "/_t/frame";
+	}
+
+	@GetMapping("/persona/u")
+	public String uPersonaGet(
+			@RequestParam("id") Long idPersona, 
+			@RequestParam("loginname") String loginname,
+			@RequestParam("pais") String pais,
+			@RequestParam("altura") Integer altura, 
+			@RequestParam("fechaNacimiento") @DateTimeFormat(iso = ISO.DATE) LocalDate fechaNacimiento, 
+			ModelMap m, HttpSession s)
+			throws DangerException {
+
+		H.isRolOK("admin", s);
+		m.put("idProducto", idPersona);
+		m.put("loginname", loginname);
+		m.put("altura", altura);
+		m.put("fechaNacimiento", fechaNacimiento);
+		m.put("view", "/persona/u");
+		return "/_t/frame";
+
+	}
+
+	@PostMapping("/persona/u")
+	public void uPersonaPost(
+			@RequestParam("id") Long idPersona, 
+			@RequestParam("loginname") String loginname,
+			@RequestParam("altura") Integer altura, 
+			@RequestParam("fechaNacimiento") @DateTimeFormat(iso = ISO.DATE) LocalDate fechaNacimiento,
+			ModelMap m, HttpSession s)
+			throws DangerException, InfoException {
+			H.isRolOK("admin", s);
+			
+		try {
+
+			Persona persona = (Persona) personaRepository.getOne(idPersona);
+			persona.setLoginname(loginname);
+			persona.setAltura(altura);
+			persona.setFnac(fechaNacimiento);
+
+			personaRepository.save(persona);
+			
+		} catch (Exception e) {
+			PRG.error("Persona ya existente", "/producto/r");
+		}
+		PRG.info("Persona con loginname " + loginname + " actualizada", "/persona/r");
+
+	}
+
+	@PostMapping("/persona/d")
+	public String dPersonaPost(
+			@RequestParam("id") Long idPersona, 
+			HttpSession s)
+			throws DangerException, InfoException {
+			H.isRolOK("admin", s);
+			
+		try {
+
+			Persona persona = (Persona) personaRepository.getOne(idPersona);
+
+			personaRepository.delete(persona);
+			
+		} catch (Exception e) {
+			PRG.error("La persona no ha sido borrado", "/persona/r");
+		}
+		return "redirect:/persona/r";
+
+	}
+	
+
 	
 // =====================================OPERACIONES DE "PAIS" ==================================================
 	@GetMapping("/pais/c")
@@ -37,92 +134,75 @@ public class AdminController {
 		H.isRolOK("admin", s);
 		m.put("view", "/pais/c");
 		return "/_t/frame";
-		}
-	
-	
+	}
+
 	@PostMapping("/pais/c")
-	public void cPaisPost(
-		@RequestParam("nombre") String nombre,
-		HttpSession s
-		) throws DangerException, InfoException {
-		H.isRolOK("admin", s); 
+	public void cPaisPost(@RequestParam("nombre") String nombre, HttpSession s) throws DangerException, InfoException {
+		H.isRolOK("admin", s);
 		try {
-		
-		Pais pais= new Pais(nombre);
-		
-		paisRepository.save(pais);
-		}
-		catch (Exception e) {
+
+			Pais pais = new Pais(nombre);
+
+			paisRepository.save(pais);
+		} catch (Exception e) {
 			PRG.error("Pais ya existente", "/pais/c");
 		}
-		PRG.info("Pais "+nombre+" creado", "/pais/r");
-			
-		}
-	
-	
+		PRG.info("Pais " + nombre + " creado", "/pais/r");
+
+	}
+
 	@GetMapping("/pais/r")
 	public String rPaisGet(ModelMap m, HttpSession s) throws DangerException {
-		H.isRolOK("admin", s); 
+		H.isRolOK("admin", s);
 		m.put("paises", paisRepository.findAllByOrderByNombreAsc());
 		m.put("view", "/pais/r");
 		return "/_t/frame";
-			}
-	
-		
+	}
+
 	@GetMapping("/pais/u")
-	public String uPaisGet(
-			@RequestParam("id") Long idPais,
-			@RequestParam("nombre") String nombre,
-			ModelMap m, 
+	public String uPaisGet(@RequestParam("id") Long idPais, @RequestParam("nombre") String nombre, ModelMap m,
 			HttpSession s) throws DangerException {
-		
-			H.isRolOK("admin", s); 
-			m.put("idPais", idPais );
-			m.put("nombre", nombre );
-			m.put("view", "/pais/u");
-			return "/_t/frame";
-	
-			}
+
+		H.isRolOK("admin", s);
+		m.put("idPais", idPais);
+		m.put("nombre", nombre);
+		m.put("view", "/pais/u");
+		return "/_t/frame";
+
+	}
+
 	@PostMapping("/pais/u")
-	public void uPaisPost(
-		@RequestParam("id") Long idPais,
-		@RequestParam("nombre") String nombre,
-		HttpSession s
-		) throws DangerException, InfoException {
-		H.isRolOK("admin", s); 
+	public void uPaisPost(@RequestParam("id") Long idPais, @RequestParam("nombre") String nombre, HttpSession s)
+			throws DangerException, InfoException {
+		H.isRolOK("admin", s);
 		try {
-		
-		Pais pais=  (Pais) paisRepository.getOne(idPais);
-		pais.setNombre(nombre);
-		
-		paisRepository.save(pais);
-		}
-		catch (Exception e) {
+
+			Pais pais = (Pais) paisRepository.getOne(idPais);
+			pais.setNombre(nombre);
+
+			paisRepository.save(pais);
+		} catch (Exception e) {
 			PRG.error("Pais ya existente", "/pais/r");
 		}
-		PRG.info("Pais "+nombre+" actualizado", "/pais/r");
-			
-		}
-	
-	@PostMapping("/pais/d")
-	public void dPaisPost(
-		@RequestParam("id") Long idPais,
-		HttpSession s
-		) throws DangerException, InfoException {
-		H.isRolOK("admin", s); 
-		try {
-		
-		Pais pais=  (Pais) paisRepository.getOne(idPais);
+		PRG.info("Pais " + nombre + " actualizado", "/pais/r");
 
-		paisRepository.delete(pais);
-		}
-		catch (Exception e) {
+	}
+
+	@PostMapping("/pais/d")
+	public String dPaisPost(@RequestParam("id") Long idPais, HttpSession s) throws DangerException, InfoException {
+		H.isRolOK("admin", s);
+		try {
+
+			Pais pais = (Pais) paisRepository.getOne(idPais);
+
+			paisRepository.delete(pais);
+		} catch (Exception e) {
 			PRG.error("El pais no ha sido borrado", "/pais/r");
 		}
-		PRG.info("Pais Borrado", "/pais/r");
-			
-		}
-// =============================================================================================================
+		return "redirect:/pais/r";
+
+	}
+// ==================================================================================================================
 
 // =====================================OPERACIONES DE "CATEGORIA" ==================================================
 	@GetMapping("/categoria/c")
@@ -130,100 +210,207 @@ public class AdminController {
 		H.isRolOK("admin", s);
 		m.put("view", "/categoria/c");
 		return "/_t/frame";
-		}
-	
-	
+	}
+
 	@PostMapping("/categoria/c")
-	public void cCategoriaPost(
-		@RequestParam("nombre") String nombre,
-		HttpSession s
-		) throws DangerException, InfoException {
-		H.isRolOK("admin", s); 
+	public void cCategoriaPost(@RequestParam("nombre") String nombre, HttpSession s)
+			throws DangerException, InfoException {
+		H.isRolOK("admin", s);
 		try {
-		
-		Categoria categoria= new Categoria(nombre);
-		
-		categoriaRepository.save(categoria);
-		}
-		catch (Exception e) {
+
+			Categoria categoria = new Categoria(nombre);
+
+			categoriaRepository.save(categoria);
+			
+		} catch (Exception e) {
 			PRG.error("Categoria ya existente", "/categoria/c");
 		}
-		PRG.info("Categoria "+nombre+" creado", "/categoria/r");
-			
-		}
-	
-	
+		PRG.info("Categoria " + nombre + " creado", "/categoria/r");
+
+	}
+
 	@GetMapping("/categoria/r")
 	public String rCategoriaGet(ModelMap m, HttpSession s) throws DangerException {
-		H.isRolOK("admin", s); 
+		H.isRolOK("admin", s);
 		m.put("categorias", categoriaRepository.findAllByOrderByNombreAsc());
 		m.put("view", "/categoria/r");
 		return "/_t/frame";
-			}
-	
-		
+	}
+
 	@GetMapping("/categoria/u")
-	public String uCategoriaGet(
-			@RequestParam("id") Long idCategoria,
-			@RequestParam("nombre") String nombre,
-			ModelMap m, 
+	public String uCategoriaGet(@RequestParam("id") Long idCategoria, @RequestParam("nombre") String nombre, ModelMap m,
 			HttpSession s) throws DangerException {
-		
-			H.isRolOK("admin", s); 
-			m.put("idCategoria", idCategoria );
-			m.put("nombre", nombre );
-			m.put("view", "/pais/u");
-			return "/_t/frame";
-	
-			}
-	
+
+		H.isRolOK("admin", s);
+		m.put("idCategoria", idCategoria);
+		m.put("nombre", nombre);
+		m.put("view", "/categoria/u");
+		return "/_t/frame";
+
+	}
+
 	@PostMapping("/categoria/u")
-	public void uCategoriaPost(
-		@RequestParam("id") Long idCategoria,
-		@RequestParam("nombre") String nombre,
-		HttpSession s
-		) throws DangerException, InfoException {
-		H.isRolOK("admin", s); 
+	public void uCategoriaPost(@RequestParam("id") Long idCategoria, @RequestParam("nombre") String nombre,
+			HttpSession s) throws DangerException, InfoException {
+		H.isRolOK("admin", s);
 		try {
-		
-		Categoria categoria=  (Categoria) categoriaRepository.getOne(idCategoria);
-		categoria.setNombre(nombre);
-		
-		categoriaRepository.save(categoria);
-		}
-		catch (Exception e) {
+
+			Categoria categoria = (Categoria) categoriaRepository.getOne(idCategoria);
+			categoria.setNombre(nombre);
+
+			categoriaRepository.save(categoria);
+		} catch (Exception e) {
 			PRG.error("Categoria ya existente", "/categoria/r");
 		}
-		PRG.info("Categoria "+nombre+" actualizado", "/categoria/r");
-			
-		}
-	
+		PRG.info("Categoria " + nombre + " actualizado", "/categoria/r");
+
+	}
+
 	@PostMapping("/categoria/d")
-	public void dCategoriaPost(
-		@RequestParam("id") Long idCategoria,
-		HttpSession s
-		) throws DangerException, InfoException {
-		H.isRolOK("admin", s); 
+	public String dCategoriaPost(@RequestParam("id") Long idCategoria, HttpSession s)
+			throws DangerException, InfoException {
+		H.isRolOK("admin", s);
 		try {
-		
-		Categoria categoria=  (Categoria) categoriaRepository.getOne(idCategoria);
 
-		categoriaRepository.delete(categoria);
+			Categoria categoria = (Categoria) categoriaRepository.getOne(idCategoria);
+
+			categoriaRepository.delete(categoria);
+		} catch (Exception e) {
+			PRG.error("La categoria no ha sido borrada", "/categoria/r");
 		}
-		catch (Exception e) {
-			PRG.error("La categoria no ha sido borrada", "/pais/r");
-		}
-		PRG.info("Categoria Borrada", "/pais/r");
+		return "redirect:/categoria/r";
+
+	}
+// ==================================================================================================================
+
+// ===================================== OPERACIONES DE "PRODUCTO" ==================================================
+
+	@GetMapping("/producto/c")
+	public String cProductoGet(ModelMap m, HttpSession s) throws DangerException {
+		H.isRolOK("admin", s);
+		m.put("categorias", categoriaRepository.findAll());
+		m.put("view", "/producto/c");
+		return "/_t/frame";
+	}
+
+	@PostMapping("/producto/c")
+	public void cProductoPost(
+			@RequestParam("nombre") String nombre, 
+			@RequestParam("stock") Integer stock,
+			@RequestParam("precio") Integer precio, 
+			@RequestParam("categoria") Long idCategoria, 
+			@RequestParam(value ="foto", required = false) MultipartFile foto,
+			HttpSession s)
+			throws DangerException, InfoException {
+			H.isRolOK("admin", s);
+
+		try {
+
+			Producto producto = new Producto(nombre, stock, precio);
 			
+			
+			//Extracción de formato de la imagen
+			String extFoto = null;
+			if (!foto.isEmpty()) {
+				extFoto = (foto.getOriginalFilename().split("\\."))[1];
+				producto.setFoto(extFoto);
+				
+			}
+			else {
+				producto.setFoto(extFoto);
+			}
+
+			// Comprobación de categoria
+			try {
+				Categoria categoria = categoriaRepository.getOne(idCategoria);
+				categoria.getProductos().add(producto);
+				producto.setCategoria(categoria);
+			} catch (Exception e) {
+				throw new Exception("Categoría no especificada");
+			}
+			
+			//Comprobación de guardado del producto
+			try {
+				productoRepository.save(producto);
+			}
+
+			catch (Exception e) {
+				throw new Exception("Producto ya existente");
+			}
+			
+			if (producto.getFoto() != null) {
+				byte[] bytes = foto.getBytes();
+			    Path path = Paths.get(UPLOADED_FOLDER + "producto-" + producto.getId() + "." + producto.getFoto());
+				Files.write(path, bytes);
+			}
+			
+		} 
+		
+		catch (Exception e) {
+			PRG.error(e.getMessage(), "/producto/c");
 		}
-// ===========================================================================================================
+		
+		PRG.info("Producto " + nombre + " creado", "/producto/r");
 
+	}
 
+	@GetMapping("/producto/r")
+	public String rProductoGet(ModelMap m, HttpSession s) throws DangerException {
+		H.isRolOK("admin", s);
+		m.put("productos", productoRepository.findAllByOrderByCategoriaNombreAscNombreAsc());
+		m.put("view", "/producto/r");
+		return "/_t/frame";
+	}
 
+	@GetMapping("/producto/u")
+	public String uProductoGet(@RequestParam("id") Long idProducto, @RequestParam("nombre") String nombre,
+			@RequestParam("stock") Integer stock, @RequestParam("precio") Integer precio, ModelMap m, HttpSession s)
+			throws DangerException {
 
+		H.isRolOK("admin", s);
+		m.put("idProducto", idProducto);
+		m.put("nombre", nombre);
+		m.put("stock", stock);
+		m.put("precio", precio);
+		m.put("view", "/producto/u");
+		return "/_t/frame";
 
+	}
 
+	@PostMapping("/producto/u")
+	public void uProductoPost(@RequestParam("id") Long idProducto, @RequestParam("nombre") String nombre,
+			@RequestParam("stock") Integer stock, @RequestParam("precio") Integer precio, ModelMap m, HttpSession s)
+			throws DangerException, InfoException {
+		H.isRolOK("admin", s);
+		try {
 
+			Producto producto = (Producto) productoRepository.getOne(idProducto);
+			producto.setNombre(nombre);
+			producto.setStock(stock);
+			producto.setPrecio(precio);
 
+			productoRepository.save(producto);
+		} catch (Exception e) {
+			PRG.error("Producto ya existente", "/producto/r");
+		}
+		PRG.info("Producto " + nombre + " actualizado", "/producto/r");
+
+	}
+
+	@PostMapping("/producto/d")
+	public String dProductoPost(@RequestParam("id") Long idProducto, HttpSession s)
+			throws DangerException, InfoException {
+		H.isRolOK("admin", s);
+		try {
+
+			Producto producto = (Producto) productoRepository.getOne(idProducto);
+
+			productoRepository.delete(producto);
+		} catch (Exception e) {
+			PRG.error("El producto no ha sido borrado", "/producto/r");
+		}
+		return "redirect:/producto/r";
+
+	}
 
 }

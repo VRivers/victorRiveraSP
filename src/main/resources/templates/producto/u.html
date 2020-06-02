@@ -1,0 +1,17 @@
+<div class="container">
+	<h1>Editar producto</h1>
+	<form method="post" action="/producto/u" class="form">
+		Nombre
+		<input type="text" name="nombre" th:value="${nombre}" autofocus="autofocus"><br>
+		
+		Stock
+		<input type="number" name="stock" th:value="${stock}" required/><br>
+		
+		Precio
+		<input type="number" name="precio" th:value="${precio}" required/><br>
+		
+		<input type="hidden" name="id" th:value="${idProducto}"/>
+		
+		<input type="submit" class="form-item" />
+	</form>
+</div>

@@ -9,13 +9,27 @@
 	<div th:if="${session.persona != null && session.persona.id == 1}">
 	<h1>Bienvenido a la aplicación P.A.P. <b>Administrador</b></h1>
 	
+	<!-- GESTION DE PERSONA -->
+	<h4>Personas</h4>
+	<form action="/persona/r">
+		<input type="submit" value="Listado Personas" class="border border-danger margin mb-3"/>
+	</form>
+	
 	<form action="/pais/r">
-		<input type="submit" value="Países"/><br>
+		<input type="submit" value="Listado Paises" class="border border-danger margin mb-3"/><br>
+	</form>
+	
+	<!-- GESTION DE PRODUCTO -->
+	<h4>Productos</h4>
+	<form action="/producto/r">
+		<input type="submit" value="Listado Productos" class="border border-success margin mb-3"/>
 	</form>
 	
 	<form action="/categoria/r">
-		<input type="submit" value="Categoria"/><br>
+		<input type="submit" value="Listado Categorias" class="border border-success margin mb-3"/>
 	</form>
+		
+	
 	</div>
 	
 		<div th:if="${session.persona != null && session.persona.id != 1}">

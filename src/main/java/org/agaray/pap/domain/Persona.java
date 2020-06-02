@@ -2,12 +2,14 @@ package org.agaray.pap.domain;
 
 import java.time.LocalDate;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -21,18 +23,22 @@ public class Persona {
 	@Column(unique = true)
 	private String loginname;
 	
-	@ManyToOne
-	private Pais pais;
-
 	private String password;
 	
 	private Integer altura;
-	
+
 	private LocalDate fnac;
-	
 	
 	private String foto;
 
+	
+	
+	@ManyToOne
+	private Pais pais;
+	
+	
+	@OneToOne(cascade = CascadeType.PERSIST)
+	private Venta ventaencurso;
 	
 //======================
 
@@ -41,16 +47,23 @@ public class Persona {
 	}
 
 
-	public Persona(String loginnamePersona, String passwordPersona, Integer altura, LocalDate fnac, Pais pais, String foto) {
+	public Persona(String loginnamePersona, String passwordPersona, Integer altura, LocalDate fnac) {
 		this.loginname = loginnamePersona;
 		this.altura = altura;
 		this.fnac=fnac;
 		this.password = (new BCryptPasswordEncoder()).encode(passwordPersona);
-		this.pais=pais;
-		this.foto=foto;
+
+	}
+
+	
+	public Venta getVentaencurso() {
+		return ventaencurso;
 	}
 
 
+	public void setVentaencurso(Venta ventaencurso) {
+		this.ventaencurso = ventaencurso;
+	}
 
 	public Integer getAltura() {
 		return altura;
@@ -114,5 +127,7 @@ public class Persona {
 	public void setFoto(String foto) {
 		this.foto = foto;
 	}
+	
+	
 
 }

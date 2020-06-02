@@ -70,6 +70,8 @@ public class Pais {
 	public void setPersonas(Collection<Persona> personas) {
 		this.personas = personas;
 	}
+
+
 	
 }
 

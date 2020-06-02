@@ -1,25 +1,23 @@
- <div class="container">
+<div class="container">
+	<h1>Nuevo producto</h1>
+	<a href="/">
+		<button>Cancelar</button>
+	</a>
 
-<h1>Registro de nueva persona</h1>
-
-	<form action="/persona/c" class="form" method="post" enctype="multipart/form-data">
+<form action="/producto/c" class="form" method="post" enctype="multipart/form-data">
+	Nombre
+	<input type="text" name="nombre" required/><br>
 	
-	Loginname
-	<input type="text" name="loginname" required/><br>
+	Stock
+	<input type="number" name="stock"  value=10 required/><br>
 	
-	Contraseña
-	<input type="password" name="password" required/><br>
+	Precio
+	<input type="number" name="precio" min=0 max=1000 value=50 required/><br>
 	
-	Altura
-	<input type="number" name="altura" min=0 max=400 value=175 required/><br>
-	
-	Fecha de Nacimiento
-	<input type="date" name="fechaNacimiento"  value="2000-02-29" /><br>
-	
-	Pais
-	<select name="pais">
+	Categoria
+	<select name="categoria">
 		<option selected="selected" value=-1>---</option>
-		<option th:each="pais:${paises}" th:value="${pais.id}" th:text="${pais.nombre}"/>
+		<option th:each="categoria:${categorias}" th:value="${categoria.id}" th:text="${categoria.nombre}"/>
 	</select><br>
 	
 	<!-- JAVASCRIPT PARA VISUALIZAR LA FOTO -->
@@ -50,8 +48,6 @@
 	<input id="id-foto" type="file" name="foto"/><br>
 	<img class="offset-1 col-2" id="id-out-foto" width="10%" height="10%" src="" alt=""/><br><br>
 	
-
 	<input type="submit" value="Registrar"/>
 	</form>
-
 </div>

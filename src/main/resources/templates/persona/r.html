@@ -30,19 +30,29 @@
 			<td th:if="${persona.pais == null}" th:text="${persona.pais}"></td>
 			<td th:if="${persona.pais != null}" th:text="${persona.pais.nombre}"></td>
 			
-			<td th:text="${persona.fnac}"></td>
+			<td th:if="${persona.pais == null}" th:text="|${persona.fnac} (Creación de la BD)|" th:style="'color:#9e2e2e;'"></td>
+			<td th:if="${persona.pais != null}" th:text="${persona.fnac}"></td>
 			
 			<td th:text="${persona.altura}"></td>
 			
 			<td class="row">
-				<form action="/persona/u" method="get">
+				<form action="/persona/u" method="get" th:if="${persona.id != 1}">
 					<input type="hidden" name="id" th:value="${persona.id}" />
 					<input type="hidden" name="loginname" th:value="${persona.loginname}" />
 					<input type="hidden" name="altura" th:value="${persona.altura}" />
 					<input type="hidden" name="fechaNacimiento" th:value="${persona.fnac}" />
+					<input type="hidden" name="idPais" th:if="${persona.pais != null}" th:value="${persona.pais.id}" />
+					<input type="hidden" name="nombrePais" th:if="${persona.pais != null}" th:value="${persona.pais.nombre}" />
 					<button onclick="submit()">
 						<img src="/img/edit.png" height="20" width="20">
 					</button>
+				</form>
+				
+				<form action="/persona/d" method="post" th:if="${persona.id != 1}" > 
+					<input type="hidden" name="id" th:value="${persona.id}" />
+					<button onclick="submit()">
+						<img src="/img/delete.png" height="20" width="20">
+					</button> 
 				</form>
 			</td>
 		</tr>

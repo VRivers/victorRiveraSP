@@ -2,7 +2,9 @@
 	<h1>Editar producto</h1>
 	<form method="post" action="/producto/u" class="form">
 		Nombre
-		<input type="text" name="nombre" th:value="${nombre}" autofocus="autofocus"><br>
+		<input type="text" name="nombre" required id="nombreId" th:value="${nombre}" onkeyup="revisarProducto()"/>
+		<div id="warning" style="display:none;"></div><br>
+		<input type="hidden" id="nombreActualId" name="nombreActual" th:value="${nombre}"/>
 		
 		Stock
 		<input type="number" name="stock" th:value="${stock}" required/><br>
@@ -10,8 +12,58 @@
 		Precio
 		<input type="number" name="precio" th:value="${precio}" required/><br>
 		
+		Categoria
+		<select name="idCategoria">
+			<option selected="selected"  th:value="${idCategoria}" th:text="${nombreCategoria}"/>
+			<option  th:each="categoria:${categorias}" th:if="${nombreCategoria != categoria.nombre}" th:value="${categoria.id}" th:text="${categoria.nombre}"/>
+		</select><br>
+		
 		<input type="hidden" name="id" th:value="${idProducto}"/>
 		
 		<input type="submit" class="form-item" />
 	</form>
+	
+<script type="text/javascript">
+
+	// AJAX DE PRODUCTO
+	function mostrar(respuestaAJAX) {
+		
+		nombreActual = document.getElementById("nombreActualId").value;
+		nombre = document.getElementById("nombreId").value;
+		
+		json = JSON.parse(respuestaAJAX);
+		if (json["coincide"] == 1 && nombreActual != nombre ) { 
+    		mensaje ="<b>Advertencia</b>, este producto ya esta registrado.";
+    		document.getElementById("warning").style="display:inline; margin-left:10px;";
+    		document.getElementById("nombreId").classList.add("bg-warning");
+    		document.getElementById("warning").innerHTML=mensaje;
+		}
+		else if (json["coincide"] == 1 &&  nombreActual != nombre ){
+			document.getElementById("warning").innerHTML='';
+			document.getElementById("nombreId").classList.remove('bg-warning');
+    	}
+		else {
+			document.getElementById("warning").innerHTML='';
+			document.getElementById("nombreId").classList.remove('bg-warning');
+		}	
+	}
+	
+	function revisarProducto() {
+		url = "http://localhost:8080/producto/cAJAX";
+			
+		x = new XMLHttpRequest();
+		x.open("POST", url, true);
+		x.setRequestHeader('Content-type','application/x-www-form-urlencoded');
+		
+		x.send("nombreProducto="+document.getElementById('nombreId').value);
+		
+		x.onreadystatechange=function() {
+			if (x.readyState==4 && x.status==200) {
+				mostrar(x.responseText);
+			} 
+	
+		//--disable-web-security --disable-gpu --user-data-dir=C:\tmp
+		}
+	}
+</script>
 </div>

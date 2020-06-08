@@ -4,6 +4,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.servlet.http.HttpSession;
 
@@ -28,7 +30,11 @@ import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Controller
 public class AdminController {
@@ -49,8 +55,31 @@ public class AdminController {
 	private String UPLOADED_FOLDER;
 	
 	
-// ===================================== OPERACIONES DE "PERSONA" ==================================================
 
+
+// ===================================== AJAX ==================================================
+
+	@ResponseBody
+	@PostMapping(value="/producto/cAJAX", produces="text/plain")
+	public String cAJAX(
+			@RequestParam String nombreProducto
+			) throws JsonProcessingException{
+		
+		HashMap<String, Integer> nombre = new HashMap<>();
+		
+			if (productoRepository.getByNombre(nombreProducto) != null) {
+				nombre.put("coincide", 1);
+			}
+			else {
+				nombre.put("coincide", 0);
+			}
+					
+		return new ObjectMapper().writeValueAsString(nombre);
+		
+	}
+	
+	
+// ================================ OPERACIONES DE "PERSONA" ============================================
 	
 	@GetMapping("/persona/r")
 	public String rPersonaGet(ModelMap m, HttpSession s) throws DangerException {
@@ -64,17 +93,21 @@ public class AdminController {
 	public String uPersonaGet(
 			@RequestParam("id") Long idPersona, 
 			@RequestParam("loginname") String loginname,
-			@RequestParam("pais") String pais,
+			@RequestParam("idPais") Long idPais,
+			@RequestParam("nombrePais") String nombrePais,
 			@RequestParam("altura") Integer altura, 
 			@RequestParam("fechaNacimiento") @DateTimeFormat(iso = ISO.DATE) LocalDate fechaNacimiento, 
 			ModelMap m, HttpSession s)
 			throws DangerException {
 
 		H.isRolOK("admin", s);
-		m.put("idProducto", idPersona);
+		m.put("idPersona", idPersona);
 		m.put("loginname", loginname);
 		m.put("altura", altura);
+		m.put("idPais", idPais);
+		m.put("nombrePais", nombrePais);
 		m.put("fechaNacimiento", fechaNacimiento);
+		m.put("paises", paisRepository.findAll());
 		m.put("view", "/persona/u");
 		return "/_t/frame";
 
@@ -86,6 +119,7 @@ public class AdminController {
 			@RequestParam("loginname") String loginname,
 			@RequestParam("altura") Integer altura, 
 			@RequestParam("fechaNacimiento") @DateTimeFormat(iso = ISO.DATE) LocalDate fechaNacimiento,
+			@RequestParam("idPais") Long idPais,
 			ModelMap m, HttpSession s)
 			throws DangerException, InfoException {
 			H.isRolOK("admin", s);
@@ -93,9 +127,12 @@ public class AdminController {
 		try {
 
 			Persona persona = (Persona) personaRepository.getOne(idPersona);
+			Pais pais = (Pais) paisRepository.getOne(idPais);
 			persona.setLoginname(loginname);
 			persona.setAltura(altura);
 			persona.setFnac(fechaNacimiento);
+			pais.getPersonas().add(persona);
+			persona.setPais(pais);
 
 			personaRepository.save(persona);
 			
@@ -238,7 +275,10 @@ public class AdminController {
 	}
 
 	@GetMapping("/categoria/u")
-	public String uCategoriaGet(@RequestParam("id") Long idCategoria, @RequestParam("nombre") String nombre, ModelMap m,
+	public String uCategoriaGet(
+			@RequestParam("id") Long idCategoria, 
+			@RequestParam("nombre") String nombre, 
+			ModelMap m,
 			HttpSession s) throws DangerException {
 
 		H.isRolOK("admin", s);
@@ -250,7 +290,9 @@ public class AdminController {
 	}
 
 	@PostMapping("/categoria/u")
-	public void uCategoriaPost(@RequestParam("id") Long idCategoria, @RequestParam("nombre") String nombre,
+	public void uCategoriaPost(
+			@RequestParam("id") Long idCategoria, 
+			@RequestParam("nombre") String nombre,
 			HttpSession s) throws DangerException, InfoException {
 		H.isRolOK("admin", s);
 		try {
@@ -363,8 +405,14 @@ public class AdminController {
 	}
 
 	@GetMapping("/producto/u")
-	public String uProductoGet(@RequestParam("id") Long idProducto, @RequestParam("nombre") String nombre,
-			@RequestParam("stock") Integer stock, @RequestParam("precio") Integer precio, ModelMap m, HttpSession s)
+	public String uProductoGet(
+			@RequestParam("id") Long idProducto, 
+			@RequestParam("nombre") String nombre,
+			@RequestParam("stock") Integer stock, 
+			@RequestParam("precio") Integer precio, 
+			@RequestParam("idCategoria") Long idCategoria,
+			@RequestParam("nombreCategoria") String nombreCategoria,
+			ModelMap m, HttpSession s)
 			throws DangerException {
 
 		H.isRolOK("admin", s);
@@ -372,22 +420,34 @@ public class AdminController {
 		m.put("nombre", nombre);
 		m.put("stock", stock);
 		m.put("precio", precio);
+		m.put("idCategoria", idCategoria);
+		m.put("nombreCategoria", nombreCategoria);
+		m.put("categorias", categoriaRepository.findAll());
 		m.put("view", "/producto/u");
 		return "/_t/frame";
 
 	}
 
 	@PostMapping("/producto/u")
-	public void uProductoPost(@RequestParam("id") Long idProducto, @RequestParam("nombre") String nombre,
-			@RequestParam("stock") Integer stock, @RequestParam("precio") Integer precio, ModelMap m, HttpSession s)
+	public void uProductoPost(
+			@RequestParam("id") Long idProducto, 
+			@RequestParam("nombre") String nombre,
+			@RequestParam("stock") Integer stock, 
+			@RequestParam("precio") Integer precio, 
+			@RequestParam("idCategoria") Long idCategoria, 
+			ModelMap m, HttpSession s)
 			throws DangerException, InfoException {
+		
 		H.isRolOK("admin", s);
 		try {
 
 			Producto producto = (Producto) productoRepository.getOne(idProducto);
+			Categoria categoria = (Categoria) categoriaRepository.getOne(idCategoria);
 			producto.setNombre(nombre);
 			producto.setStock(stock);
 			producto.setPrecio(precio);
+			categoria.getProductos().add(producto);
+			producto.setCategoria(categoria);
 
 			productoRepository.save(producto);
 		} catch (Exception e) {
@@ -412,5 +472,8 @@ public class AdminController {
 		return "redirect:/producto/r";
 
 	}
+// ==================================================================================================================
+
+
 
 }

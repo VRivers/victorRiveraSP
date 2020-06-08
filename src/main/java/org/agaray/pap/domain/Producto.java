@@ -28,11 +28,13 @@ public class Producto {
 
 	private String foto;
 	
+	@OneToMany(mappedBy = "producto", cascade = CascadeType.PERSIST)
+	private Collection<LineaDeVenta> lineasdeventa;
+	
 	@ManyToOne
 	private Categoria categoria;
 	
-	@OneToMany(mappedBy = "producto")
-	private Collection<LineaDeVenta> lineasdeventa;
+
 
 //======================
 

@@ -30,11 +30,13 @@
 					<input type="hidden" name="nombre" th:value="${producto.nombre}" />
 					<input type="hidden" name="stock" th:value="${producto.stock}" />
 					<input type="hidden" name="precio" th:value="${producto.precio}" />
+					<input type="hidden" name="idCategoria" th:value="${producto.categoria.id}" />
+					<input type="hidden" name="nombreCategoria" th:value="${producto.categoria.nombre}" />
 					<button onclick="submit()">
 						<img src="/img/edit.png" height="20" width="20">
 					</button>
 				</form>
-				  <form th:if="${producto.lineasdeventa==null}" action="/producto/d" method="post" > 
+				  <form th:if="${producto.lineasDeVenta.size() == 0}" action="/producto/d" method="post" > 
 					<input type="hidden" name="id" th:value="${producto.id}" />
 					<button onclick="submit()">
 						<img src="/img/delete.png" height="20" width="20">

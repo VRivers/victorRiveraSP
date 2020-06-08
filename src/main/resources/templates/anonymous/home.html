@@ -32,7 +32,7 @@
 	
 	</div>
 	
-		<div th:if="${session.persona != null && session.persona.id != 1}">
+	<div th:if="${session.persona != null && session.persona.id != 1}">
 	<h1>Bienvenido a la aplicación P.A.P. <b th:text=${session.persona.loginname}/> </h1>
 	<code>Sin funcionalidades disponibles por el momento</code>
 	</div>

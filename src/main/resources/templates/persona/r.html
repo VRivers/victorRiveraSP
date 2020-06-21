@@ -21,8 +21,9 @@
 
 		<tr th:each="persona:${personas}">
 			<td>
-				<img th:if="${persona.foto != null}" th:src="|/img/upload/persona/persona-${persona.id}.${persona.foto}|" height=100px width=100px/> 
-				<img th:if="${persona.foto == null}" src="/img/nopersona.png" height=100px width=100px/> 
+				<img th:if="${persona.foto != null && persona.loginname != 'Administrador'}" th:src="|/img/upload/persona/persona-${persona.id}.${persona.foto}|" height=100px width=100px/> 
+				<img th:if="${persona.foto == null && persona.loginname != 'Administrador'}" src="/img/nopersona.png" height=100px width=100px/> 
+				<img th:if="${persona.loginname == 'Administrador'}" src="/img/admin.jpg" height=100px width=100px/> 
 			</td>
 			
 			<td th:text="${persona.loginname}"></td>
